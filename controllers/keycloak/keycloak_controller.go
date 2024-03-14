@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	corev1 "k8s.io/api/core/v1"
 
 	keycloakApi "github.com/epam/edp-keycloak-operator/api/v1"
 	"github.com/epam/edp-keycloak-operator/controllers/helper"
@@ -20,7 +21,8 @@ import (
 )
 
 type Helper interface {
-	CreateKeycloakClientFomAuthData(ctx context.Context, authData *helper.KeycloakAuthData) (keycloak.Client, error)
+	CreateKeycloakClientFromAuthData(ctx context.Context, authData *helper.KeycloakAuthData, caCertificate []byte) (keycloak.Client, error)
+	RetrieveCACertificate(ctx context.Context, namespace string, source helper.CertificateSource) ([]byte, error)
 }
 
 func NewReconcileKeycloak(client client.Client, scheme *runtime.Scheme, helper Helper) *ReconcileKeycloak {
@@ -44,6 +46,8 @@ const connectionRetryPeriod = time.Second * 10
 //+kubebuilder:rbac:groups=v1.edp.epam.com,namespace=placeholder,resources=keycloaks,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=v1.edp.epam.com,namespace=placeholder,resources=keycloaks/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=v1.edp.epam.com,namespace=placeholder,resources=keycloaks/finalizers,verbs=update
+//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
+//+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch
 
 // Reconcile is a loop for reconciling Keycloak object.
 func (r *ReconcileKeycloak) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
@@ -61,7 +65,21 @@ func (r *ReconcileKeycloak) Reconcile(ctx context.Context, req reconcile.Request
 		return ctrl.Result{}, fmt.Errorf("unable to get keycloak instance: %w", err)
 	}
 
-	if err := r.updateConnectionStatusToKeycloak(ctx, instance); err != nil {
+	var caCertificate []byte
+	var err error
+
+	if instance.Spec.CertificateSecret != "" || instance.Spec.CertificateConfigMap != "" {
+		source := helper.CertificateSource{
+			Secret:    instance.Spec.CertificateSecret,
+			ConfigMap: instance.Spec.CertificateConfigMap,
+		}
+		caCertificate, err = r.helper.RetrieveCACertificate(ctx, req.Namespace, source)
+		if err != nil {
+			return reconcile.Result{}, fmt.Errorf("unable to retrieve CA certificate: %w", err)
+		}
+	}
+
+	if err := r.updateConnectionStatusToKeycloak(ctx, instance, caCertificate); err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -94,16 +112,17 @@ func (r *ReconcileKeycloak) SetupWithManager(mgr ctrl.Manager, successReconcileT
 	return nil
 }
 
-func (r *ReconcileKeycloak) updateConnectionStatusToKeycloak(ctx context.Context, instance *keycloakApi.Keycloak) error {
+func (r *ReconcileKeycloak) updateConnectionStatusToKeycloak(ctx context.Context, instance *keycloakApi.Keycloak, caCertificate []byte) error {
 	log := ctrl.LoggerFrom(ctx)
 	log.Info("Start updating connection status to Keycloak")
 
-	_, err := r.helper.CreateKeycloakClientFomAuthData(ctx, helper.MakeKeycloakAuthDataFromKeycloak(instance))
+	authData := helper.MakeKeycloakAuthDataFromKeycloak(instance)
+	kcClient, err := r.helper.CreateKeycloakClientFromAuthData(ctx, authData, caCertificate)
 	if err != nil {
 		log.Error(err, "Unable to connect to Keycloak")
 	}
 
-	connected := err == nil
+	connected := err == nil && kcClient != nil
 
 	if instance.Status.Connected == connected {
 		log.Info("Connection status hasn't been changed", "status", instance.Status.Connected)
