@@ -34,6 +34,10 @@ type KeycloakSpec struct {
 	// +optional
 	// +kubebuilder:validation:Enum=serviceAccount;user
 	AdminType string `json:"adminType,omitempty"`
+
+	// +optional
+	// caCertificate is the name of the k8s object ConfigMap or Secret containing the custom CA certificate
+	CACertificate string `json:"caCertificate,omitempty"`
 }
 
 const (
