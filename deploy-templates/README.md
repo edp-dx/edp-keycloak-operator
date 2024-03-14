@@ -75,6 +75,10 @@ To install the Keycloak Operator, follow the steps below:
     spec:
       secret: keycloak-access             # Secret name
       url: https://keycloak.example.com   # Keycloak URL
+      caCertificate: |                    # Custom CA certificate, optional
+        -----BEGIN CERTIFICATE-----
+        MIIDDTCCAfWgAwIBAgIUQlK1...
+        -----END CERTIFICATE-----
     ```
 
     Wait for the `.status` field with  `status.connected: true`
@@ -134,7 +138,7 @@ Development versions are also available from the [snapshot helm chart repository
 | extraVolumeMounts | list | `[]` | Additional volumeMounts to be added to the container |
 | extraVolumes | list | `[]` | Additional volumes to be added to the pod |
 | image.repository | string | `"epamedp/keycloak-operator"` | EDP keycloak-operator Docker image name. The released image can be found on [Dockerhub](https://hub.docker.com/r/epamedp/keycloak-operator) |
-| image.tag | string | `nil` | EDP keycloak-operator Docker image tag. The released image can be found on [Dockerhub](https://hub.docker.com/r/epamedp/keycloak-operator/tags) |
+| image.tag | string | `nil` | EDP keycloak-operator Docker image tag. The released image can be found on [Dockerhub](://hub.docker.com/r/epamedp/keycloak-operator/tags) |
 | imagePullPolicy | string | `"IfNotPresent"` | If defined, a imagePullPolicy applied to the deployment |
 | name | string | `"keycloak-operator"` | Application name string |
 | nodeSelector | object | `{}` | Node labels for pod assignment |
