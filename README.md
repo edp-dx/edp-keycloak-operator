@@ -66,7 +66,7 @@ To install the Keycloak Operator, follow the steps below:
       password: cGFzcw==   # base64-encoded value of "pass"
     ```
 
-3. Create Custom Resource `kind: Keycloak` with Keycloak instance URL and secret created on the previous step:
+3. Create Custom Resource `kind: Keycloak` with Keycloak instance URL, secret created on the previous step, and optionally specify a custom CA certificate:
 
     ```yaml
     apiVersion: v1.edp.epam.com/v1
@@ -76,11 +76,29 @@ To install the Keycloak Operator, follow the steps below:
     spec:
       secret: keycloak-access             # Secret name
       url: https://keycloak.example.com   # Keycloak URL
+      customCA:
+        type: ConfigMap                   # ConfigMap or Secret
+        name: custom-ca                   # Name of the ConfigMap or Secret containing the CA certificate
     ```
 
     Wait for the `.status` field with  `status.connected: true`
 
-4. Create Keycloak realm and group using Custom Resources:
+4. If you are configuring a Keycloak instance for an entire cluster, you can use the `ClusterKeycloak` resource with an optional custom CA certificate:
+
+    ```yaml
+    apiVersion: v1.edp.epam.com/v1
+    kind: ClusterKeycloak
+    metadata:
+      name: cluster-keycloak-sample
+    spec:
+      secret: keycloak-access             # Secret name
+      url: https://keycloak.example.com   # Keycloak URL
+      customCA:
+        type: Secret                      # ConfigMap or Secret
+        name: custom-ca                   # Name of the ConfigMap or Secret containing the CA certificate
+    ```
+
+5. Create Keycloak realm and group using Custom Resources:
 
    ```yaml
    apiVersion: v1.edp.epam.com/v1
