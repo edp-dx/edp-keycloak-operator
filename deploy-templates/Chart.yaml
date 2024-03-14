@@ -95,6 +95,26 @@ annotations:
       description: Keycloak Realm User Management
   artifacthub.io/crdsExamples: |
     - apiVersion: v1.edp.epam.com/v1
+      kind: Keycloak
+      metadata:
+        name: my-keycloak
+      spec:
+        secret: my-keycloak-secret
+        url: https://example.com
+        customCA:
+          configMap: ""
+          secret: ""
+    - apiVersion: v1.edp.epam.com/v1alpha1
+      kind: ClusterKeycloak
+      metadata:
+        name: keycloak-sample
+      spec:
+        secret: secret-name-in-operator-ns
+        url: https://keycloak.example.com
+        customCA:
+          configMap: ""
+          secret: ""
+    - apiVersion: v1.edp.epam.com/v1
       kind: KeycloakClientScope
       metadata:
         name: groups
@@ -257,13 +277,6 @@ annotations:
           foo: "bar"
           baz: "jazz"
     - apiVersion: v1.edp.epam.com/v1
-      kind: Keycloak
-      metadata:
-        name: my-keycloak
-      spec:
-        secret: my-keycloak-secret
-        url: https://example.com
-    - apiVersion: v1.edp.epam.com/v1
       kind: KeycloakRealmRoleBatch
       metadata:
         name: myrole
@@ -293,13 +306,6 @@ annotations:
         description: default developer role
         name: developer
         realm: main
-    - apiVersion: v1.edp.epam.com/v1alpha1
-      kind: ClusterKeycloak
-      metadata:
-        name: keycloak-sample
-      spec:
-        secret: secret-name-in-operator-ns
-        url: https://keycloak.example.com
   artifacthub.io/links: |
     - name: EDP Documentation
       url: https://epam.github.io/edp-install/
