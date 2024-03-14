@@ -4,9 +4,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // KeycloakSpec defines the desired state of Keycloak.
 type KeycloakSpec struct {
 	// URL of keycloak service
@@ -34,6 +31,10 @@ type KeycloakSpec struct {
 	// +optional
 	// +kubebuilder:validation:Enum=serviceAccount;user
 	AdminType string `json:"adminType,omitempty"`
+
+	// +optional
+	// CustomCAName is the name of the k8s object ConfigMap or Secret containing the custom CA certificate.
+	CustomCAName string `json:"customCAName,omitempty"`
 }
 
 const (
